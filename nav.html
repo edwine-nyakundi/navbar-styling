@@ -1,0 +1,195 @@
+{% load static %}
+
+<style>
+  :root {
+    --navbar-width: 240px;
+    --navbar-collapsed-width: 60px;
+    --navbar-bg: #1d0450;
+    --navbar-text: #f2e9e4;
+    --navbar-hover: #393d53;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, rgb(49 7 129), rgb(28 4 77));
+  }
+
+  #navbar {
+    width: var(--navbar-width);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    background: var(--navbar-bg);
+    color: var(--navbar-text);
+    overflow-y: auto;
+    transition: 0.3s;
+  }
+
+  #navbar.collapsed {
+    width: var(--navbar-collapsed-width);
+  }
+
+  #navbar-header {
+    padding: 20px;
+    text-align: center;
+  }
+
+  #navbar-logo {
+    max-width: 80%;
+    transition: 0.3s;
+  }
+
+  .collapsed #navbar-logo {
+    display: none;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--navbar-text);
+    transition: 0.2s;
+  }
+
+  .nav-link:hover {
+    background: var(--navbar-hover);
+  }
+
+  .nav-icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+  }
+
+  .nav-text {
+    transition: 0.3s;
+  }
+
+  .collapsed .nav-text {
+    display: none;
+  }
+
+  #navbar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--navbar-hover);
+  }
+
+  #user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  #user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  #mobile-toggle, #footer-toggle {
+    display: block;
+    padding: 15px;
+    background: none;
+    border: none;
+    color: var(--navbar-text);
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  #footer-toggle {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .collapsed #footer-toggle {
+    right: 10px;
+  }
+
+  @media (max-width: 768px) {
+    #navbar {
+      width: var(--navbar-collapsed-width);
+    }
+
+    #navbar.expanded {
+      width: var(--navbar-width);
+    }
+
+    .nav-text {
+      display: none;
+    }
+
+    .expanded .nav-text {
+      display: inline;
+    }
+  }
+</style>
+
+<nav id="navbar">
+  <div id="navbar-header">
+    <img id="navbar-logo" src="{% static 'asset/img/logo-myartbin-4.png' %}" alt="MyArtBin Logo">
+    <button id="mobile-toggle"><i class="bx bx-menu"></i></button>
+  </div>
+
+  <div id="navbar-content">
+    <a href="{% url 'dashboard' %}" class="nav-link"><i class="bx bx-grid-alt nav-icon"></i><span class="nav-text">Dashboard</span></a>
+    <a href="{% url 'friend' %}" class="nav-link"><i class="bx bx-user nav-icon"></i><span class="nav-text">Friends</span></a>
+    <a href="{% url 'message' %}" class="nav-link"><i class="bx bx-envelope nav-icon"></i><span class="nav-text">Messages</span> <span id="unread-count"></span></a>
+    <a href="{% url 'artnook' user_id=request.user.id %}" class="nav-link"><i class="bx bx-book-alt nav-icon"></i><span class="nav-text">Artnooks</span></a>
+    <a href="{% url 'shop' user_id=request.user.id %}" class="nav-link"><i class="bx bx-store nav-icon"></i><span class="nav-text">Shops</span></a>
+    <a href="{% url 'commission' %}" class="nav-link"><i class="bx bx-paint nav-icon"></i><span class="nav-text">Commissions</span></a>
+    <a href="{% url 'tutorial_list' user_id=request.user.id %}" class="nav-link"><i class="bx bx-palette nav-icon"></i><span class="nav-text">Tutorials</span></a>
+    <a href="{% url 'artchallenge_list' user_id=request.user.id %}" class="nav-link"><i class="bx bx-cool nav-icon"></i><span class="nav-text">Challenges</span></a>
+    <a href="{% url 'keeper' %}" class="nav-link"><i class="bx bx-pencil nav-icon"></i><span class="nav-text">Keeper</span></a>
+    <a href="{% url 'worldbuild' %}" class="nav-link"><i class="bx bx-world nav-icon"></i><span class="nav-text">World Build</span></a>
+  </div>
+
+  <div id="navbar-footer">
+    <div id="user-info">
+      <img id="user-avatar" src="{{ user.account.image.url }}" alt="User Avatar">
+      <span class="nav-text">{{ user.username }}</span>
+    </div>
+    <a href="/account" class="nav-link"><i class="bx bx-grid-alt nav-icon"></i><span class="nav-text">Account</span></a>
+    <a href="/settings" class="nav-link"><i class="bx bx-cog nav-icon"></i><span class="nav-text">Settings</span></a>
+    <a href="/logout" class="nav-link"><i class="bx bx-log-out nav-icon"></i><span class="nav-text">Logout</span></a>
+  </div>
+  <button id="footer-toggle"><i class="bx bx-cog"></i></button>
+</nav>
+
+<script>
+  const navbar = document.getElementById('navbar');
+  const mobileToggle = document.getElementById('mobile-toggle');
+  const footerToggle = document.getElementById('footer-toggle');
+
+  mobileToggle.addEventListener('click', function() {
+    navbar.classList.toggle('collapsed');
+  });
+
+  footerToggle.addEventListener('click', function() {
+    navbar.classList.toggle('collapsed');
+  });
+
+  function updateUnreadMessagesCount() {
+    axios.get('/message/api/unread_count/', {
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(function(response) {
+      const count = response.data.unread_count;
+      const countElement = document.getElementById('unread-count');
+      
+      if (count > 0) {
+        countElement.textContent = count;
+        countElement.style.display = 'inline';
+      } else {
+        countElement.style.display = 'none';
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', updateUnreadMessagesCount);
+</script>
